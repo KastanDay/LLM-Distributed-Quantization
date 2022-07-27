@@ -58,7 +58,7 @@ class WandBHook(hooks.BaseHook):
             print("ValueError: throughput not available", e)
         except Exception as e:
             # expecting the occational ValueError: not enough values to unpack (expected 2, got 1)
-            print("Error when collecting samples_per_sec, Tflops...", e, "full thruput metric", metrics['throughput'])
+            print("Error when collecting samples_per_sec, Tflops...", e, "full metrics:", metrics)
 
         if samples_per_sec:
             metrics['samples_per_sec'] = float(samples_per_sec)

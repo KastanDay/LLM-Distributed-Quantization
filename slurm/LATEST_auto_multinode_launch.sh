@@ -2,15 +2,15 @@
 
 #SBATCH --job-name=pdg_viz_gpu
 #SBATCH --partition=gpuA40x4
-#SBATCH --account=${MY_ACCOUNT_GPU}
+#SBATCH --account=bbki-delta-gpu
 
 #SBATCH --time=4:00:00
 #SBATCH --nodes=8
-#SBATCH --ntasks=8
+#SBATCH --ntasks=32
 
-#SBATCH --gpus-per-task=4
 #SBATCH --gpus-per-node=4
-#SBATCH --cpus-per-task=16
+#SBATCH --mem=0
+#SBATCH --exclusive
 
 echo "Starting on hostname: $(hostname | cut -c 1-7)"
 echo "  JobID:= " $SLURM_JOB_ID
@@ -30,9 +30,12 @@ conda activate col_ai_old_v5
 sleep 1
 echo "done activating col_ai_old_v5"
 
+wandb offline
+
 #### 👉 CHANGE ME 😊 ####
-export BASE_DIR=/u/kastanday/LLM-Distributed-Quantization/benchmarks/gpt
-export CONFIG_FILEPATH=${BASE_DIR}/configs/gpt2_2d.py
+export BASE_DIR=/u/kastanday/LLM-Distributed-Quantization
+export TRAIN_FILEPATH=${BASE_DIR}/benchmarks/gpt/v2_train.py
+export CONFIG_FILEPATH=${BASE_DIR}/benchmarks/gpt/configs/gpt2_8b_2p5d_256.py
 export DATA=${BASE_DIR}/datasets/small-gpt-dataset.json
 # export MY_WANDB_TAGS=$(date +"%h-%d__%H:%M")
 
@@ -61,7 +64,7 @@ for ((node_i = 0; node_i < $SLURM_JOB_NUM_NODES; node_i++)); do
         ######################"
         # srun --nodes=1 --ntasks=1 -w "$local_node_hostname" \
         ssh "$local_node_hostname" \
-            "export DATA=/u/kastanday/colossal_ai/raw_json_backup/train_data_FINAL.json; conda activate col_ai_old_v5; python $BASE_DIR/train_gpt.py --config $CONFIG_FILEPATH --host $MAIN_HOST --port 29500 --world_size $WORLD_SIZE --rank $localrank" &
+            "export DATA=$DATA; conda activate col_ai_old_v5; python $TRAIN_FILEPATH --config $CONFIG_FILEPATH --host $MAIN_HOST --port 29500 --world_size $WORLD_SIZE --rank $localrank" &
         
         # strictly incrememnt local rank by 1 for each gpu launched
         ((localrank=localrank+1))

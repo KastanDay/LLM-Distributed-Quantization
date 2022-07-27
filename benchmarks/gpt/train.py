@@ -9,27 +9,33 @@ from colossalai.logging import disable_existing_loggers, get_dist_logger
 from colossalai.nn import CosineAnnealingWarmupLR
 from colossalai.trainer import Trainer, hooks
 from colossalai.utils import MultiTimer, get_dataloader, is_using_pp
-# from custom_wandb_log_hook import WandBHook
-# from model_zoo.gpt import GPTLMLoss
 from titans.loss.lm_loss import GPTLMLoss
 
 from data import WebtextDataset
 
 # kastan's custom logging
-# from logging import custom_wandb_log_hook
-
-sys.path.append('../../logging')
-from logging.custom_wandb_log_hook import WandBHook
+sys.path.append('/u/kastanday/LLM-Distributed-Quantization/logging')
+from custom_wandb_log_hook import WandBHook
 
 
 def train_gpt():
     disable_existing_loggers()
     parser = colossalai.get_default_parser()
+    parser.add_argument('--from_col', default=True, action='store_true',  help='Set flag...', required=False)
     parser.add_argument('--from_torch', default=False, action='store_true', help='Set flag...', required=False)
     # parser.add_argument('-t', '--wandb_tags', nargs='*', default=False, action='store_true', help='Set flag...', required=False)
-    # python train.py -t 1234 2345 3456 4567
     args = parser.parse_args()
-    if args.from_torch:
+    if args.from_col:
+        print("Launching from ColossalAI's Launcher...")
+        colossalai.launch(config=args.config,
+                        rank=args.rank,
+                        world_size=args.world_size,
+                        host=args.host,
+                        port=args.port,
+                        local_rank=args.local_rank,
+                        backend='nccl',
+                        verbose=True)
+    elif args.from_torch:
         colossalai.launch_from_torch(config=args.config, seed=42)
     else:
         # standard launch
@@ -116,7 +122,7 @@ def train_gpt():
         # hooks.LogMemoryByEpochHook(logger),
         # hooks.LogTimingByEpochHook(timer, logger, ignore_num_train_steps=5),
         # hooks.SaveCheckpointHook(checkpoint_dir='./ckpt')
-        WandBHook(args, priority=10),
+        WandBHook(args, gpc, priority=10),
     ]
 
     logger.info("Training start", ranks=[0])
