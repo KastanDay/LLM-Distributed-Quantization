@@ -1,6 +1,6 @@
 import torch
 from colossalai.amp import AMP_TYPE
-from model_zoo.gpt import gpt2_8B, gpt2_xl, gpt2_medium, gpt2_large
+from titans.model.gpt import gpt2_8B, gpt2_xl, gpt2_medium, gpt2_large
 
 VOCAB_SIZE = 50304
 SEQ_LENGTH = 1024

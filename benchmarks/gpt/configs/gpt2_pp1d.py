@@ -1,7 +1,7 @@
 import torch
 from colossalai.amp import AMP_TYPE
 from colossalai.engine.schedule import PipelineSchedule
-from model_zoo.gpt import gpt2_8B_pipeline
+from titans.model.gpt import gpt2_8B_pipeline
 
 VOCAB_SIZE = 50304
 SEQ_LENGTH = 1024
