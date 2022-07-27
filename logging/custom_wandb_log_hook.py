@@ -14,7 +14,7 @@ class WandBHook(hooks.BaseHook):
     See colossal AI docs for more hooks similar to `def after_train_iter()`
     """
 
-    def __init__(self, args, priority=10):
+    def __init__(self, args, gpc, priority=10):
         self.priority = priority
         self._logger = get_dist_logger()
         
@@ -24,11 +24,8 @@ class WandBHook(hooks.BaseHook):
         datetime_str = datetime.now().strftime("%h-%d__%H:%M") # group by
         wandbtags = 'my_first_tag' # tags 
         
-        wandb.init(entity="kastan", project="col_ai", name=experiment_name, group=datetime_str, tags=[wandbtags])
-        wandb.config.colossal_config_file = args.config
+        wandb.init(entity="kastan", project="col_ai", config=gpc.config, name=experiment_name, group=datetime_str, tags=[wandbtags])
         wandb.config.data_dir = os.environ['DATA']
-        wandb.config.update(args)
-        
         wandb.run.summary["hello_message"] = "Hi, we got started"
 
     def after_train_iter(self, trainer, logits, label, loss):
@@ -53,6 +50,12 @@ class WandBHook(hooks.BaseHook):
 
             del metrics['throughput']
             del metrics['lr']
+        except ValueError as e:
+            # probably Tflops is not available (in vanilla pytorch). Only collect sample_per_sec.
+            samples_per_sec = re.findall("\d+\.\d+", throughput_string)[0] # only first value
+            del metrics['throughput']
+            del metrics['lr']
+            print("ValueError: throughput not available", e)
         except Exception as e:
             # expecting the occational ValueError: not enough values to unpack (expected 2, got 1)
             print("Error when collecting samples_per_sec, Tflops...", e, "full thruput metric", metrics['throughput'])

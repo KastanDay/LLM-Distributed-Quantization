@@ -1,1 +1,1 @@
-from kas_run_gpt_benchmark import WandBHook
+from .custom_wandb_log_hook import WandBHook
