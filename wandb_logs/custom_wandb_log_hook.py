@@ -24,9 +24,18 @@ class WandBHook(hooks.BaseHook):
         datetime_str = datetime.now().strftime("%h-%d__%H:%M") # group by
         wandbtags = 'my_first_tag' # tags 
         
-        wandb.init(entity="kastan", project="col_ai", config=gpc.config, name=experiment_name, group=datetime_str, tags=[wandbtags])
-        wandb.config.data_dir = os.environ['DATA']
-        wandb.run.summary["hello_message"] = "Hi, we got started"
+        wandbtags : list[str] = [f'TP={gpc.config.TENSOR_PARALLEL_SIZE}', f'PP={gpc.config.PIPELINE_SIZE}', f'BATCH_SIZE{gpc.config.BATCH_SIZE}', f'NUM_EPOCHS={gpc.config.NUM_EPOCHS}', f'MICRO_BATCH_SIZE={gpc.config.MICRO_BATCH_SIZE}', f'NUM_MICRO_BATCHES={gpc.config.NUM_MICRO_BATCHES}']
+        
+        print("Our GPC config!! See what to steal here.")
+        
+        wandb.init(entity="kastan", project="LLM-Distributed-Quantization", config=gpc.config, name=experiment_name, group=datetime_str, tags=wandbtags)
+        
+        try:
+            wandb.config.data_dir = os.environ['DATA']
+        except KeyError:
+            print("⚠️ WARNING: DATA environment variable not set. ⚠️")
+            
+        # wandb.run.summary["hello_message"] = "Hi, we got started"
 
     def after_train_iter(self, trainer, logits, label, loss):
         # copied from here https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/trainer/hooks/_log_hook.py#L39

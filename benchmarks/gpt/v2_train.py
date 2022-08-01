@@ -24,7 +24,7 @@ from titans.loss.lm_loss import GPTLMLoss
 from data import WebtextDataset
 
 # kastan's custom logging
-sys.path.append('/u/kastanday/LLM-Distributed-Quantization/logging')
+sys.path.append('/u/kastanday/LLM-Distributed-Quantization/wandb_logs')
 from custom_wandb_log_hook import WandBHook
 
 
