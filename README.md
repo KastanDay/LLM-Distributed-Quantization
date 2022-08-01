@@ -1,3 +1,34 @@
+# Installing 
+
+```bash
+git clone --recurse-submodules git@github.com:KastanDay/LLM-Distributed-Quantization.git
+```
+
+Install strict dependencies (on `x64`):
+```
+conda env create -f ./utilities/environment.yml
+```
+
+### Launch slurm jobs
+Specify the number of nodes required via `--nnodes=8` in slurm. Also set `--ntasks` to the same number as the number of nodes. 
+
+Specify the config path to use as the first parameter. I recommend using absolute paths. 
+```bash
+# launch sbatch from login node of slurm cluster 
+sbatch LATEST_auto_multinode_launch.sh <config_filepath>
+```
+
+### Updating
+Subsequently pull new changes using:
+```bash
+cd LLM-Distributed-Quantization; git pull --recurse-submodules
+```
+
+# Experiment Tracking
+All experiments are tracked with Weights and Biases. View the live progress here: https://wandb.ai/kastan/LLM-Distributed-Quantization
+
+For transparency, the first couple hundred experiments are saved here: https://wandb.ai/kastan/col_ai 
+
 # Benchmark for Tuning Accuracy and Efficiency
 
 ## Overview
