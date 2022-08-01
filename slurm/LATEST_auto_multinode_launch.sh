@@ -17,7 +17,7 @@
 if [[ -z $1 ]];
 then 
     echo "No parameter passed."
-    export CONFIG_FILEPATH=$BASE_DIR/gpt2_configs/gpt2_3d_manual_8B.py
+    export CONFIG_FILEPATH=$BASE_DIR/gpt2_configs/quant_gpt2_2p5d.py
 else
     echo "Parameter passed = $1"
     export CONFIG_FILEPATH=$1
@@ -40,7 +40,6 @@ export CONFIG_FILEPATH=${BASE_DIR}/benchmarks/gpt/configs/gpt2_8b_2p5d_256.py
 export CONDA_ENV_NAME=col_ai_old_v5
 export NUM_GPUS_PER_NODE=4
 MAIN_HOST_PORT=29500
-wandb offline # faster, less too frequent ..uh.. files? errors. 
 
 ### Starting script ###
 echo "Loding cuda (module load cuda/11.7.0)..."
@@ -89,7 +88,8 @@ for ((node_i = 0; node_i < $SLURM_JOB_NUM_NODES; node_i++)); do
         #######################
         # srun --nodes=1 --ntasks=1 -w "$local_node_hostname" \
         ssh "$local_node_hostname" \
-            "export DATA=$DATA; conda activate $CONDA_ENV_NAME; python $TRAIN_FILEPATH --config $CONFIG_FILEPATH --host $MAIN_HOST --port $MAIN_HOST_PORT --world_size $WORLD_SIZE --rank $localrank" &
+            "wandb offline; export DATA=$DATA; conda activate $CONDA_ENV_NAME; " \
+            "python $TRAIN_FILEPATH --config $CONFIG_FILEPATH --host $MAIN_HOST --port $MAIN_HOST_PORT --world_size $WORLD_SIZE --rank $localrank" &
         
         # monotonically incrememnt local rank by 1 for EVERY gpu launched
         ((localrank=localrank+1))
