@@ -4,15 +4,14 @@
 #SBATCH --partition=gpuA40x4
 #SBATCH --account=bbki-delta-gpu
 
-#SBATCH --time=4:00:00
-#SBATCH --nodes=8
-#SBATCH --ntasks=8
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --time=0:30:00
 
-#SBATCH --gpus-per-node=2
-#SBATCH --mem=0
-#SBATCH --exclusive
+#SBATCH --gpus-per-node=1
+#SBATCH --mem=30GB
 
-echo "Launcher: LATEST_auto_multinode_launch.sh"
+echo "Launcher: smallest_test_launcher.sh"
 ###############################
 ## 😄 ~ Configure me !! 👈 ~~ ## 
 ###############################
@@ -87,8 +86,9 @@ echo "World size: $WORLD_SIZE"
 
 # todo pass in the date_time from here (so they're all the same for grouping!)
 # even minutes is too short... 
-
 # todo launch via torchrun. 
+
+
 
 # the total numbner of workes is worker_num=$SLURM_JOB_NUM_NODES
 localrank=0
@@ -103,11 +103,12 @@ for ((node_i = 0; node_i < $SLURM_JOB_NUM_NODES; node_i++)); do
         #######################
         #### Main Launcher ####
         #######################
-        # srun --nodes=1 --ntasks=1 -w "$local_node_hostname" \
         # TODO: add `wandb offline;` when necessary.
-        ssh "$local_node_hostname" \
-            "conda activate $CONDA_ENV_NAME; export DATA=$DATA; wandb online" \  
-            "python $TRAIN_FILEPATH --config $CONFIG_FILEPATH --host $MAIN_HOST --port $MAIN_HOST_PORT --world_size $WORLD_SIZE --rank $localrank" &
+
+        # srun --nodes=1 --ntasks=1 -w "$local_node_hostname" \
+        # ssh "$local_node_hostname" \
+        conda activate $CONDA_ENV_NAME; export DATA=$DATA; wandb online;
+        python $TRAIN_FILEPATH --config $CONFIG_FILEPATH --host $MAIN_HOST --port $MAIN_HOST_PORT --world_size $WORLD_SIZE --rank $localrank
         
         # monotonically incrememnt local rank by 1 for EVERY gpu launched
         ((localrank=localrank+1))
