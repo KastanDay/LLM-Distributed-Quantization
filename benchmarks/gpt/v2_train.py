@@ -162,7 +162,7 @@ def main():
                 hooks=hook_list,
                 display_progress=True,
                 return_output_label=False,
-                max_steps=250)
+                max_steps=100000)
 
 if __name__ == '__main__':
     main()

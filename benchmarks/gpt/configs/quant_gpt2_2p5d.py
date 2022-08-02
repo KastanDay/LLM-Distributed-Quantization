@@ -40,7 +40,7 @@ loss = dict(
 model = dict(type=quant_gpt2_8B,
              vocab_size=VOCAB_SIZE,
              max_position_embeddings=SEQ_LENGTH,
-             dtype=torch.half,
+            #  dtype=torch.half,
             #  fuse_scale_mask_softmax=True,
              checkpoint=True)
 
