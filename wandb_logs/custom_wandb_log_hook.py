@@ -1,5 +1,6 @@
 import os
 import pathlib
+from contextlib import suppress
 from datetime import datetime
 
 import wandb
@@ -7,35 +8,66 @@ from colossalai.logging import disable_existing_loggers, get_dist_logger
 from colossalai.trainer import hooks
 from colossalai.trainer.hooks._metric_hook import ThroughputMetric
 
+# helper function
+# def validate_input(param_to_validate):
+#     try:
+#         return list_to_append.append(param)
+#     except AttributeError as e:
+#         print('⚠️ WandBHook missing wandb tag: ', e)
+#         return ''
 
 class WandBHook(hooks.BaseHook):
     """
     Kastan custom WandB logger.
     See colossal AI docs for more hooks similar to `def after_train_iter()`
     """
-
+    
     def __init__(self, args, gpc, priority=10):
         self.priority = priority
         self._logger = get_dist_logger()
         
         colossal_config_filepath = pathlib.Path(args.config)
         experiment_name = colossal_config_filepath.stem # just stem filename, no .filetype
+        datetime_str = str(os.environ['EXPERIMENT_START_TIME']) # set from sbatch launcher
+        
+        # Suppresses errors when tags are missing! Brilliant! Must do line-by-line... 😑
+        wandbtags: list[str] = []
+        with suppress(AttributeError): wandbtags.append(datetime_str)
+        with suppress(AttributeError): wandbtags.append(f"SLURM={os.environ['WANDB_SLURM_ID']}")
+        with suppress(AttributeError): wandbtags.append(f"WORLD_SIZE={os.environ['WANDB_WORLD_SIZE']}")
+        with suppress(AttributeError): wandbtags.append(f"TP={gpc.config.TENSOR_PARALLEL_SIZE}")
+        with suppress(AttributeError): wandbtags.append(f"PP={gpc.config.PIPELINE_SIZE}")
+        with suppress(AttributeError): wandbtags.append(f"NUM_EPOCHS={gpc.config.NUM_EPOCHS}")
+        with suppress(AttributeError): wandbtags.append(f"BATCH_SIZE{gpc.config.BATCH_SIZE}")
+        with suppress(AttributeError): wandbtags.append(f"MICRO_BATCH_SIZE={gpc.config.MICRO_BATCH_SIZE}")
+        with suppress(AttributeError): wandbtags.append(f"NUM_MICRO_BATCHES={gpc.config.NUM_MICRO_BATCHES}")
+        if len(wandbtags) == 0:
+            wandbtags = ['no_tags']
+    
+        wandb.init(
+            entity="kastan",
+            project="LLM-Distributed-Quantization",
+            config=gpc.config,
+            name=experiment_name,
+            group=datetime_str,
+            tags=wandbtags,
+        )
 
-        datetime_str = datetime.now().strftime("%h-%d__%H:%M") # group by
-        wandbtags = 'my_first_tag' # tags 
-        
-        wandbtags : list[str] = [f'TP={gpc.config.TENSOR_PARALLEL_SIZE}', f'PP={gpc.config.PIPELINE_SIZE}', f'BATCH_SIZE{gpc.config.BATCH_SIZE}', f'NUM_EPOCHS={gpc.config.NUM_EPOCHS}', f'MICRO_BATCH_SIZE={gpc.config.MICRO_BATCH_SIZE}', f'NUM_MICRO_BATCHES={gpc.config.NUM_MICRO_BATCHES}']
-        
-        print("Our GPC config!! See what to steal here.")
-        
-        wandb.init(entity="kastan", project="LLM-Distributed-Quantization", config=gpc.config, name=experiment_name, group=datetime_str, tags=wandbtags)
+        try:
+            ## Save whole model config file.
+            wandb.save(args.config)  
+        except Exception as e:
+            print("WandBHook: Error saving colossalai config file:", e)
         
         try:
+            # keep this after wandb.init()
             wandb.config.data_dir = os.environ['DATA']
+            wandb.config.conda_env_name = os.environ['CONDA_ENV_NAME']
+            wandb.config.num_gpus_per_node = os.environ['NUM_GPUS_PER_NODE']
+            wandb.config.total_gpus = os.environ['WANDB_WORLD_SIZE']
         except KeyError:
             print("⚠️ WARNING: DATA environment variable not set. ⚠️")
             
-        # wandb.run.summary["hello_message"] = "Hi, we got started"
 
     def after_train_iter(self, trainer, logits, label, loss):
         # copied from here https://github.com/hpcaitech/ColossalAI/blob/main/colossalai/trainer/hooks/_log_hook.py#L39
