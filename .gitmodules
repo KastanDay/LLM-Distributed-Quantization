@@ -2,3 +2,7 @@
 	path = Titans-quantized
 	url = git@github.com:KastanDay/Titans-quantized.git
 	branch = main
+[submodule "ColossalAI-quantized"]
+	path = ColossalAI-quantized
+	url = git@github.com:KastanDay/ColossalAI-quantized.git
+	branch = main
