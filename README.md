@@ -21,7 +21,7 @@ sbatch LATEST_auto_multinode_launch.sh <config_filepath>
 ### Updating
 Subsequently pull new changes using:
 ```bash
-cd LLM-Distributed-Quantization; git pull --recurse-submodules
+git submodule update --remote
 ```
 
 # Experiment Tracking
