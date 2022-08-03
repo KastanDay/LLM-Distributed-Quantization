@@ -153,6 +153,8 @@ def main():
         WandBHook(args, gpc, priority=10),
     ]
     
+    # TODO: log trainer.engine._model.layer_norm 
+    
     # print("Watching model!")
     # wandb.watch(model, log_freq = 50)
 

@@ -4,14 +4,15 @@
 #SBATCH --partition=gpuA40x4
 #SBATCH --account=bbki-delta-gpu
 
-#SBATCH --nodes=2
-#SBATCH --ntasks=2
-#SBATCH --time=1:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --time=0:20:00
 
 #SBATCH --gpus-per-node=2
-#SBATCH --mem=50GB
+#SBATCH --mem=20GB
 
 echo "Launcher: two_gpu_per_node.sh"
+echo "THIS ONE I REMOVED THE ; in the end of the line at the ssh middle line"
 ###############################
 ## 😄 ~ Configure me !! 👈 ~~ ## 
 ###############################
@@ -105,7 +106,7 @@ for ((node_i = 0; node_i < $SLURM_JOB_NUM_NODES; node_i++)); do
 
         # TODO: add `wandb offline;` when necessary.
         ssh "$local_node_hostname" \
-            "conda activate $CONDA_ENV_NAME; export DATA=$DATA; wandb online" \  
+            "conda activate $CONDA_ENV_NAME; export DATA=$DATA" \  
             "python $TRAIN_FILEPATH --config $CONFIG_FILEPATH --host $MAIN_HOST --port $MAIN_HOST_PORT --world_size $WORLD_SIZE --rank $localrank" &
         
         # monotonically incrememnt local rank by 1 for EVERY gpu launched

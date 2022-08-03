@@ -1,5 +1,6 @@
 import os
 import pathlib
+import statistics
 from contextlib import suppress
 from datetime import datetime
 
@@ -89,8 +90,9 @@ class WandBHook(hooks.BaseHook):
             throughput_string = metrics['throughput']
             samples_per_sec, Tflops = re.findall("\d+\.\d+", throughput_string)
 
-            del metrics['throughput']
-            del metrics['lr']
+            with suppress(Exception): del metrics['throughput']
+            with suppress(Exception): del metrics['lr']
+            with suppress(Exception): del metrics['loss']
         except ValueError as e:
             # probably Tflops is not available (in vanilla pytorch). Only collect sample_per_sec.
             samples_per_sec = re.findall("\d+\.\d+", throughput_string)[0] # only first value
@@ -110,6 +112,12 @@ class WandBHook(hooks.BaseHook):
         # LOG TO WANDB
         wandb.log({ "loss": loss})
         wandb.log({ "per_step_metrics": metrics })
+        wandb.log({ "embed_layer_norm": trainer.engine._model.embed_layer_norm})
+        wandb.log({ "head_layer_norm": trainer.engine._model.head_layer_norm})
+        wandb.log({ "decoder_layer_norm_mean": statistics.mean(trainer.engine._model.decoder_layer_norm)})
+        
+        
+        
 
     def before_train(self, trainer):
         self._logger.info('training starts')
