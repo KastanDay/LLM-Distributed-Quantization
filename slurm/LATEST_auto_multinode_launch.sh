@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=pdg_viz_gpu
 #SBATCH --partition=gpuA40x4
-#SBATCH --account=bbki-delta-gpu
+#SBATCH --account=<tbd>
 
 #SBATCH --time=4:00:00
 #SBATCH --nodes=8
